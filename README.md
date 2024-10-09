@@ -44,7 +44,7 @@ No, Custom URL for Elementor is designed to be lightweight and optimized. It sho
 
 ## 📜 Changelog
 
-### 1.0.4
+### 2.0.0
 - Added: Custom CSS functionality for advanced styling options
 - Improved: Security enhancements with proper output escaping
 - Optimized: Code structure for better performance
@@ -61,10 +61,6 @@ If you encounter any issues or have questions, please visit our [support forum](
 ## 🤝 Contributing
 
 We welcome contributions to improve Custom URL for Elementor. Please feel free to submit pull requests or open issues on this repository.
-
-## 📄 License
-
-This project is licensed under the GPL-2.0+ License - see the [LICENSE](LICENSE) file for details.
 
 ## 👏 Credits
 
