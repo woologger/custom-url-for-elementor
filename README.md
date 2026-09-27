@@ -20,10 +20,18 @@ This plugin is developed by the [Woologger](https://woologger.com) team, passion
 
 - **Custom URLs**: Add clickable links to Container, Section, Column, and Inner Section elements.
 - **New Tab Option**: Choose whether links open in the same window or a new tab.
+- **Behaves Like a Real Link**: Ctrl/Cmd + click and middle click open a new tab, and buttons or links inside the element keep working.
+- **Accessible**: Keyboard focus and Enter key support, plus an optional screen reader label.
 - **Custom CSS**: Apply custom CSS styles directly to your elements for advanced customization.
 - **User-Friendly Interface**: Seamlessly integrates with Elementor's interface.
 - **Lightweight**: Optimized code minimizes impact on your website's performance.
 - **Responsive Design**: Works flawlessly across all devices and screen sizes.
+
+## ⚙️ Requirements
+
+- WordPress 6.5 or later (tested up to 7.1)
+- PHP 7.4 or later
+- Elementor (tested up to 4.0); Elementor Pro optional
 
 ## 🚀 Installation
 
@@ -42,11 +50,29 @@ Yes, we regularly update the plugin to ensure compatibility with the latest vers
 
 Currently, the plugin supports Container, Section, Column, and Inner Section elements. We're considering expanding this functionality in future updates.
 
+### I use Elementor Pro. Where is the Custom CSS field?
+
+Elementor Pro already has its own Custom CSS field (Advanced tab) that uses the same setting, so the plugin hides its duplicate field when Pro is active. CSS you added earlier keeps working and appears in Pro's field.
+
 ### Will this plugin slow down my website?
 
 No, Custom URL for Elementor is designed to be lightweight and optimized. It should not have any noticeable impact on your website's loading speed.
 
 ## 📜 Changelog
+
+### 2.1.0
+- Fixed: Custom URL panel now appears on Column elements (it was only shown on Containers and Sections)
+- Fixed: Security – `javascript:` and other unsafe URLs are no longer executed; only http(s), mailto, tel and sms links are followed
+- Fixed: Conflict with Elementor Pro's own Custom CSS control
+- Fixed: Clicking a link or button inside a clickable element no longer triggers the element link as well
+- Fixed: PHP warning when the "Open in New Tab" setting was never saved
+- Improved: Inline `onclick` replaced with a small, deferred script (works with strict Content Security Policies)
+- Improved: Ctrl/Cmd + click and middle click open the link in a new tab; new tabs open with `noopener`
+- Improved: Accessibility – keyboard focus, Enter key support and an optional accessible label
+- Improved: The URL control's "Open in new window" option is honoured
+- Improved: Custom CSS is sanitized before being written to the stylesheet
+- Improved: Containers already rendered as an `<a>` tag keep Elementor's native link
+- Updated: Requires WordPress 6.5+ and PHP 7.4+, declares the Elementor dependency; updated for WordPress 7.1 and Elementor 4.0
 
 ### 2.0.0
 - Added: Custom CSS functionality for advanced styling options

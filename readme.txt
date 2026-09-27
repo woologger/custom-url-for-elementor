@@ -1,10 +1,10 @@
 === Custom URL for Elementor ===
 Contributors: woologger
 Tags: elementor, custom-url, link, container, section
-Requires at least: 5.6
-Tested up to: 6.6
-Requires PHP: 7.0
-Stable tag: 2.0.0
+Requires at least: 6.5
+Tested up to: 7.1
+Requires PHP: 7.4
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,6 +18,8 @@ Custom URL for Elementor is a powerful plugin that extends the functionality of 
 
 * **Custom URLs**: Add clickable links to Container, Section, Column, and Inner Section elements.
 * **New Tab Option**: Choose whether links open in the same window or a new tab.
+* **Behaves Like a Real Link**: Ctrl/Cmd + click and middle click open a new tab, and buttons or links inside the element keep working.
+* **Accessible**: Keyboard focus and Enter key support, plus an optional screen reader label.
 * **Custom CSS**: Apply custom CSS styles directly to your elements for advanced customization.
 * **User-Friendly Interface**: Seamlessly integrates with Elementor's interface for easy use.
 * **Lightweight**: Optimized code ensures minimal impact on your website's performance.
@@ -69,6 +71,14 @@ No, Custom URL for Elementor is designed to be lightweight and optimized. It sho
 
 Yes, the custom CSS feature is safe when used responsibly. However, we recommend testing any custom CSS thoroughly to ensure it doesn't interfere with your site's existing styles.
 
+= I use Elementor Pro. Where is the Custom CSS field? =
+
+Elementor Pro already has its own Custom CSS field (Advanced tab) that uses the same setting, so the plugin hides its duplicate field when Pro is active. CSS you added earlier keeps working and appears in Pro's field.
+
+= Can links inside a clickable element still be clicked? =
+
+Yes. Links, buttons, form fields and other interactive elements inside a clickable element keep their own behaviour.
+
 = Can I use this plugin with other page builders? =
 
 This plugin is specifically designed for Elementor. It may not function correctly with other page builders.
@@ -82,6 +92,20 @@ This plugin is specifically designed for Elementor. It may not function correctl
 
 == Changelog ==
 
+= 2.1.0 =
+* Fixed: Custom URL panel now appears on Column elements (it was only shown on Containers and Sections)
+* Fixed: Security – `javascript:` and other unsafe URLs are no longer executed; only http(s), mailto, tel and sms links are followed
+* Fixed: Conflict with Elementor Pro's own Custom CSS control
+* Fixed: Clicking a link or button inside a clickable element no longer triggers the element link as well
+* Fixed: PHP warning when the "Open in New Tab" setting was never saved
+* Improved: Inline `onclick` replaced with a small, deferred script (works with strict Content Security Policies)
+* Improved: Ctrl/Cmd + click and middle click open the link in a new tab; new tabs open with `noopener`
+* Improved: Accessibility – keyboard focus, Enter key support and an optional accessible label
+* Improved: The URL control's "Open in new window" option is honoured
+* Improved: Custom CSS is sanitized before being written to the stylesheet
+* Improved: Containers already rendered as an `<a>` tag keep Elementor's native link
+* Updated: Requires WordPress 6.5+ and PHP 7.4+, declares the Elementor dependency; updated for WordPress 7.1 and Elementor 4.0
+
 = 2.0.0 =
 * Added: Custom CSS functionality for advanced styling options
 * Improved: Security enhancements with proper output escaping
@@ -93,6 +117,9 @@ This plugin is specifically designed for Elementor. It may not function correctl
 * Initial release
 
 == Upgrade Notice ==
+
+= 2.1.0 =
+Security and compatibility update: blocks unsafe link URLs, fixes Column support and the Elementor Pro Custom CSS conflict, and improves accessibility. Recommended for all users.
 
 = 2.0.0 =
 This update introduces custom CSS functionality, enhances security, and optimizes performance. It is strongly recommended for all users to update to this version.
@@ -111,4 +138,4 @@ Custom URL for Elementor does not collect or store any user data. It functions e
 
 == Credits ==
 
-Custom URL for Elementor is brought to you by [Woologger](https://woologger.com), a team passionate about creating useful tools for WordPress and Elementor users.
+Custom URL for Elementor is brought to you by [Woologger](https://woologger.com), a team passionate about creating useful tools for WordPress and Elementor users.
