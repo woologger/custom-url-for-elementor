@@ -1,0 +1,69 @@
+/* Custom URL for Elementor */
+.cufe-link {
+	cursor: var(--cufe-cursor, pointer);
+}
+
+.cufe-link.cufe-link--off {
+	cursor: auto;
+}
+
+.cufe-link:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+/*
+ * Hover effects. They use the individual `translate` / `scale` properties so they don't
+ * override a `transform` set by the user or by Elementor motion effects, and they keep
+ * Elementor's own background/border transitions.
+ */
+.elementor-element.cufe-hover-lift,
+.elementor-element.cufe-hover-grow,
+.elementor-element.cufe-hover-shrink,
+.elementor-element.cufe-hover-shadow,
+.elementor-element.cufe-hover-dim {
+	transition:
+		background var(--background-transition, .3s),
+		border var(--border-transition, .3s),
+		box-shadow var(--cufe-transition, 300ms) ease,
+		translate var(--cufe-transition, 300ms) ease,
+		scale var(--cufe-transition, 300ms) ease,
+		opacity var(--cufe-transition, 300ms) ease;
+}
+
+.elementor-element.cufe-hover-lift:hover,
+.elementor-element.cufe-hover-lift:focus-visible {
+	translate: 0 -6px;
+}
+
+.elementor-element.cufe-hover-grow:hover,
+.elementor-element.cufe-hover-grow:focus-visible {
+	scale: 1.03;
+}
+
+.elementor-element.cufe-hover-shrink:hover,
+.elementor-element.cufe-hover-shrink:focus-visible {
+	scale: .97;
+}
+
+.elementor-element.cufe-hover-shadow:hover,
+.elementor-element.cufe-hover-shadow:focus-visible {
+	box-shadow: 0 12px 32px rgb(0 0 0 / .15);
+}
+
+.elementor-element.cufe-hover-dim:hover,
+.elementor-element.cufe-hover-dim:focus-visible {
+	opacity: .8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.elementor-element.cufe-hover-lift:hover,
+	.elementor-element.cufe-hover-lift:focus-visible,
+	.elementor-element.cufe-hover-grow:hover,
+	.elementor-element.cufe-hover-grow:focus-visible,
+	.elementor-element.cufe-hover-shrink:hover,
+	.elementor-element.cufe-hover-shrink:focus-visible {
+		translate: none;
+		scale: none;
+	}
+}
