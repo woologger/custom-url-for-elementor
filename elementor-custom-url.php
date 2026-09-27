@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Custom URL for Elementor
  * Plugin URI:        https://github.com/woologger/custom-url-for-elementor
- * Description:       Makes Elementor Container, Section, Inner Section and Column elements clickable with a custom URL, and adds per-element custom CSS.
- * Version:           2.1.0
+ * Description:       Makes Elementor Container, Section, Inner Section and Column elements clickable: links, popups, lightboxes, smooth scrolling to anchors, hover effects, click tracking and per-element custom CSS.
+ * Version:           2.2.0
  * Author:            Woologger
  * Author URI:        https://woologger.com
  * Text Domain:       custom-url-for-elementor
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CUFE_VERSION', '2.1.0' );
+define( 'CUFE_VERSION', '2.2.0' );
 define( 'CUFE_FILE', __FILE__ );
 define( 'CUFE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -43,6 +43,8 @@ final class Custom_URL_For_Elementor {
 	 * URL protocols allowed for element links. `javascript:` and `data:` are never allowed.
 	 */
 	const ALLOWED_PROTOCOLS = array( 'http', 'https', 'mailto', 'tel', 'sms' );
+
+	const DEFAULT_TRACKING_EVENT = 'custom_url_click';
 
 	/** @var self|null */
 	private static $instance = null;
@@ -73,7 +75,9 @@ final class Custom_URL_For_Elementor {
 			add_action( 'elementor/element/parse_css', array( $this, 'add_custom_css' ), 10, 2 );
 		}
 
-		add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ) );
+		add_action( 'init', array( $this, 'register_assets' ) );
+		// Hover effects are previewed live in the editor.
+		add_action( 'elementor/preview/enqueue_styles', array( $this, 'enqueue_style' ) );
 	}
 
 	/**
@@ -114,6 +118,31 @@ final class Custom_URL_For_Elementor {
 		wp_register_style( 'custom-url-for-elementor', CUFE_URL . 'assets/css/frontend.css', array(), CUFE_VERSION );
 	}
 
+	public function enqueue_style(): void {
+		wp_enqueue_style( 'custom-url-for-elementor' );
+	}
+
+	/**
+	 * Device keys (desktop plus Elementor's active breakpoints) and their labels.
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_device_options(): array {
+		$devices = array( 'desktop' => esc_html__( 'Desktop', 'custom-url-for-elementor' ) );
+
+		$plugin = \Elementor\Plugin::$instance;
+		if ( isset( $plugin->breakpoints ) && method_exists( $plugin->breakpoints, 'get_active_breakpoints' ) ) {
+			foreach ( $plugin->breakpoints->get_active_breakpoints() as $key => $breakpoint ) {
+				$devices[ $key ] = method_exists( $breakpoint, 'get_label' ) ? $breakpoint->get_label() : ucfirst( $key );
+			}
+		} else {
+			$devices['tablet'] = esc_html__( 'Tablet', 'custom-url-for-elementor' );
+			$devices['mobile'] = esc_html__( 'Mobile', 'custom-url-for-elementor' );
+		}
+
+		return $devices;
+	}
+
 	/**
 	 * @param \Elementor\Element_Base $element
 	 */
@@ -133,6 +162,7 @@ final class Custom_URL_For_Elementor {
 				'type'        => \Elementor\Controls_Manager::URL,
 				'placeholder' => esc_html__( 'https://example.com', 'custom-url-for-elementor' ),
 				'options'     => array( 'url', 'is_external', 'nofollow' ),
+				'description' => esc_html__( 'Use a page URL, an on-page anchor such as #contact, or a Dynamic Tag › Actions (Popup, Lightbox).', 'custom-url-for-elementor' ),
 				'dynamic'     => array(
 					'active' => true,
 				),
@@ -154,6 +184,40 @@ final class Custom_URL_For_Elementor {
 		);
 
 		$element->add_control(
+			'cufe_scroll_offset',
+			array(
+				'label'       => esc_html__( 'Anchor Scroll Offset (px)', 'custom-url-for-elementor' ),
+				'type'        => \Elementor\Controls_Manager::NUMBER,
+				'min'         => 0,
+				'max'         => 1000,
+				'step'        => 1,
+				'default'     => '',
+				'description' => esc_html__( 'For #anchor links: space left above the target, e.g. the height of a sticky header.', 'custom-url-for-elementor' ),
+			)
+		);
+
+		$element->add_control(
+			'cufe_disable_on',
+			array(
+				'label'       => esc_html__( 'Disable Link On', 'custom-url-for-elementor' ),
+				'type'        => \Elementor\Controls_Manager::SELECT2,
+				'multiple'    => true,
+				'label_block' => true,
+				'options'     => $this->get_device_options(),
+				'default'     => array(),
+			)
+		);
+
+		$element->add_control(
+			'cufe_heading_accessibility',
+			array(
+				'label'     => esc_html__( 'Accessibility', 'custom-url-for-elementor' ),
+				'type'      => \Elementor\Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$element->add_control(
 			'cufe_aria_label',
 			array(
 				'label'       => esc_html__( 'Accessible Label', 'custom-url-for-elementor' ),
@@ -165,6 +229,121 @@ final class Custom_URL_For_Elementor {
 				'ai'          => array(
 					'active' => false,
 				),
+			)
+		);
+
+		$element->add_control(
+			'cufe_tooltip',
+			array(
+				'label'     => esc_html__( 'Tooltip', 'custom-url-for-elementor' ),
+				'type'      => \Elementor\Controls_Manager::TEXT,
+				'dynamic'   => array(
+					'active' => true,
+				),
+				'ai'        => array(
+					'active' => false,
+				),
+			)
+		);
+
+		$element->add_control(
+			'cufe_heading_hover',
+			array(
+				'label'     => esc_html__( 'Hover', 'custom-url-for-elementor' ),
+				'type'      => \Elementor\Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$element->add_control(
+			'cufe_cursor',
+			array(
+				'label'     => esc_html__( 'Cursor', 'custom-url-for-elementor' ),
+				'type'      => \Elementor\Controls_Manager::SELECT,
+				'default'   => '',
+				'options'   => array(
+					''            => esc_html__( 'Pointer (default)', 'custom-url-for-elementor' ),
+					'zoom-in'     => esc_html__( 'Zoom In', 'custom-url-for-elementor' ),
+					'alias'       => esc_html__( 'Alias', 'custom-url-for-elementor' ),
+					'crosshair'   => esc_html__( 'Crosshair', 'custom-url-for-elementor' ),
+					'context-menu' => esc_html__( 'Context Menu', 'custom-url-for-elementor' ),
+					'help'        => esc_html__( 'Help', 'custom-url-for-elementor' ),
+					'default'     => esc_html__( 'Arrow', 'custom-url-for-elementor' ),
+				),
+				'selectors' => array(
+					'{{WRAPPER}}' => '--cufe-cursor: {{VALUE}};',
+				),
+			)
+		);
+
+		$element->add_control(
+			'cufe_hover_effect',
+			array(
+				'label'        => esc_html__( 'Hover Effect', 'custom-url-for-elementor' ),
+				'type'         => \Elementor\Controls_Manager::SELECT,
+				'default'      => '',
+				'options'      => array(
+					''       => esc_html__( 'None', 'custom-url-for-elementor' ),
+					'lift'   => esc_html__( 'Lift', 'custom-url-for-elementor' ),
+					'grow'   => esc_html__( 'Grow', 'custom-url-for-elementor' ),
+					'shrink' => esc_html__( 'Shrink', 'custom-url-for-elementor' ),
+					'shadow' => esc_html__( 'Shadow', 'custom-url-for-elementor' ),
+					'dim'    => esc_html__( 'Dim', 'custom-url-for-elementor' ),
+				),
+				'prefix_class' => 'cufe-hover-',
+			)
+		);
+
+		$element->add_control(
+			'cufe_hover_duration',
+			array(
+				'label'      => esc_html__( 'Transition Duration', 'custom-url-for-elementor' ) . ' (ms)',
+				'type'       => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => array( 'ms' ),
+				'range'      => array(
+					'ms' => array(
+						'min'  => 0,
+						'max'  => 2000,
+						'step' => 50,
+					),
+				),
+				'selectors'  => array(
+					'{{WRAPPER}}' => '--cufe-transition: {{SIZE}}ms;',
+				),
+				'condition'  => array( 'cufe_hover_effect!' => '' ),
+			)
+		);
+
+		$element->add_control(
+			'cufe_heading_tracking',
+			array(
+				'label'     => esc_html__( 'Click Tracking', 'custom-url-for-elementor' ),
+				'type'      => \Elementor\Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$element->add_control(
+			'cufe_track_clicks',
+			array(
+				'label'        => esc_html__( 'Track Clicks', 'custom-url-for-elementor' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'return_value' => 'yes',
+				'default'      => '',
+				'description'  => esc_html__( 'Sends an event to Google Tag Manager (dataLayer) or Google Analytics 4 (gtag) when the element is clicked.', 'custom-url-for-elementor' ),
+			)
+		);
+
+		$element->add_control(
+			'cufe_track_event',
+			array(
+				'label'       => esc_html__( 'Event Name', 'custom-url-for-elementor' ),
+				'type'        => \Elementor\Controls_Manager::TEXT,
+				'placeholder' => self::DEFAULT_TRACKING_EVENT,
+				'ai'          => array(
+					'active' => false,
+				),
+				'condition'   => array( 'cufe_track_clicks' => 'yes' ),
 			)
 		);
 
@@ -208,8 +387,8 @@ final class Custom_URL_For_Elementor {
 			return;
 		}
 
-		$link     = isset( $settings['container_url'] ) && is_array( $settings['container_url'] ) ? $settings['container_url'] : array();
-		$raw_url  = isset( $link['url'] ) ? trim( (string) $link['url'] ) : '';
+		$link    = isset( $settings['container_url'] ) && is_array( $settings['container_url'] ) ? $settings['container_url'] : array();
+		$raw_url = isset( $link['url'] ) ? trim( (string) $link['url'] ) : '';
 
 		if ( '' === $raw_url ) {
 			return;
@@ -220,8 +399,6 @@ final class Custom_URL_For_Elementor {
 			return;
 		}
 
-		$new_tab = ! empty( $link['is_external'] ) || ( isset( $settings['open_in_new_tab'] ) && 'yes' === $settings['open_in_new_tab'] );
-
 		$attributes = array(
 			'class'         => 'cufe-link',
 			'data-cufe-url' => $url,
@@ -229,19 +406,56 @@ final class Custom_URL_For_Elementor {
 			'tabindex'      => '0',
 		);
 
+		$new_tab = ! empty( $link['is_external'] ) || ( isset( $settings['open_in_new_tab'] ) && 'yes' === $settings['open_in_new_tab'] );
 		if ( $new_tab ) {
 			$attributes['data-cufe-target'] = '_blank';
 		}
 
-		$aria_label = isset( $settings['cufe_aria_label'] ) ? trim( wp_strip_all_tags( (string) $settings['cufe_aria_label'] ) ) : '';
+		$aria_label = $this->get_text_setting( $settings, 'cufe_aria_label' );
 		if ( '' !== $aria_label ) {
 			$attributes['aria-label'] = $aria_label;
+		}
+
+		$tooltip = $this->get_text_setting( $settings, 'cufe_tooltip' );
+		if ( '' !== $tooltip ) {
+			$attributes['title'] = $tooltip;
+		}
+
+		$offset = isset( $settings['cufe_scroll_offset'] ) ? absint( $settings['cufe_scroll_offset'] ) : 0;
+		if ( $offset > 0 && false !== strpos( $url, '#' ) ) {
+			$attributes['data-cufe-offset'] = (string) min( $offset, 1000 );
+		}
+
+		$disable_on = isset( $settings['cufe_disable_on'] ) && is_array( $settings['cufe_disable_on'] ) ? array_filter( array_map( 'sanitize_key', $settings['cufe_disable_on'] ) ) : array();
+		if ( $disable_on ) {
+			$attributes['data-cufe-disable'] = implode( ' ', $disable_on );
+		}
+
+		if ( isset( $settings['cufe_track_clicks'] ) && 'yes' === $settings['cufe_track_clicks'] ) {
+			$attributes['data-cufe-track'] = $this->sanitize_event_name( isset( $settings['cufe_track_event'] ) ? (string) $settings['cufe_track_event'] : '' );
 		}
 
 		$element->add_render_attribute( '_wrapper', $attributes );
 
 		wp_enqueue_script( 'custom-url-for-elementor' );
-		wp_enqueue_style( 'custom-url-for-elementor' );
+		$this->enqueue_style();
+	}
+
+	/**
+	 * @param array<string, mixed> $settings
+	 */
+	private function get_text_setting( array $settings, string $key ): string {
+		return isset( $settings[ $key ] ) && is_scalar( $settings[ $key ] ) ? trim( wp_strip_all_tags( (string) $settings[ $key ] ) ) : '';
+	}
+
+	/**
+	 * GA4 event names: letters, digits and underscores, starting with a letter, max 40 characters.
+	 */
+	private function sanitize_event_name( string $name ): string {
+		$name = preg_replace( '/[^A-Za-z0-9_]/', '_', trim( $name ) );
+		$name = ltrim( (string) $name, '0123456789_' );
+		$name = rtrim( substr( $name, 0, 40 ), '_' );
+		return '' === $name ? self::DEFAULT_TRACKING_EVENT : $name;
 	}
 
 	/**
